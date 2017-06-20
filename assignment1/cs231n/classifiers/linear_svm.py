@@ -108,7 +108,22 @@ def svm_loss_vectorized(W, X, y, reg):
   # to reuse some of the intermediate values that you used to compute the     #
   # loss.                                                                     #
   #############################################################################
-  pass
+
+  original_margin = scores - correct_class_scores[...,np.newaxis] + 1
+
+  #mask to identiy where the margin is greater than 0 (all we care about)
+  pos_margin_mask = (original_margin > 0).astype(float)
+  # count how many times >0 for each image but dont count correct class hence -1
+  sum_margin = pos_margin_mask.sum(1) - 1
+
+  #make the correct class margin be negative total of how many > 0
+  pos_margin_mask[range(pos_margin_mask.shape[0]), y] = -sum_margin
+
+
+  dW = np.dot(X.T, pos_margin_mask)
+
+  dW = dW / num_train + 2 * reg * W
+
   #############################################################################
   #                             END OF YOUR CODE                              #
   #############################################################################
