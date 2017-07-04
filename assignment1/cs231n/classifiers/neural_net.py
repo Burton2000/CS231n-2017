@@ -2,7 +2,7 @@ from __future__ import print_function
 
 import numpy as np
 import matplotlib.pyplot as plt
-from past.builtins import xrange
+
 
 class TwoLayerNet(object):
   """
@@ -76,7 +76,20 @@ class TwoLayerNet(object):
     # Store the result in the scores variable, which should be an array of      #
     # shape (N, C).                                                             #
     #############################################################################
-    pass
+
+    # FC1 layer
+    fc1_activation = np.dot(X,W1) + b1
+
+    # Relu layer
+    fc1_activation[fc1_activation < 0 ] = 0
+    relu_1 = fc1_activation
+
+    # FC2 layer
+    fc2_activation = np.dot(relu_1,W2) + b2
+
+    # Output scores
+    scores = fc2_activation
+
     #############################################################################
     #                              END OF YOUR CODE                             #
     #############################################################################
@@ -86,14 +99,35 @@ class TwoLayerNet(object):
       return scores
 
     # Compute the loss
-    loss = None
+    loss = 0.0
     #############################################################################
     # TODO: Finish the forward pass, and compute the loss. This should include  #
     # both the data loss and L2 regularization for W1 and W2. Store the result  #
     # in the variable loss, which should be a scalar. Use the Softmax           #
     # classifier loss.                                                          #
     #############################################################################
-    pass
+
+    softmax_scores = np.zeros_like(scores)
+
+    for ii in range(N):
+      current_score = scores[ii, :]
+      # numeric stability for our softmax output by subtracing max of the output scores
+      current_score = current_score - np.max(current_score)
+      # compute softmax of our scores
+      exp_current_score = np.exp(current_score)
+      softmax_scores[ii, :] = exp_current_score / np.sum(exp_current_score)
+
+      # calculate our cross entropy loss of the softmax classifier
+      sum_softmax_minus_actual = np.sum(exp_current_score)
+      loss = loss + np.log(sum_softmax_minus_actual) - current_score[y[ii]]
+
+    # average the loss over the number of samples
+    loss /= N
+
+    # add the regularisation loss = lambda*sum(weights.^2)
+    loss += reg * (np.sum(W1*W1) + np.sum(W2*W2) + np.sum(b1*b1) + np.sum(b2*b2))
+
+
     #############################################################################
     #                              END OF YOUR CODE                             #
     #############################################################################
@@ -141,7 +175,7 @@ class TwoLayerNet(object):
     train_acc_history = []
     val_acc_history = []
 
-    for it in xrange(num_iters):
+    for it in range(num_iters):
       X_batch = None
       y_batch = None
 
