@@ -29,26 +29,38 @@ def softmax_loss_naive(W, X, y, reg):
   # here, it is easy to run into numeric instability. Don't forget the        #
   # regularization!                                                           #
   #############################################################################
-  y_score = np.zeros_like(y)
-
-  num_train = X.shape[0]
   num_classes = W.shape[1]
-  scores = np.dot(X,W) # return (N, C) scores matrix
+  num_train = X.shape[0]
 
+  scores = np.dot(X, W)
+
+  # calculate loss and gradient for each element of our batch
   for ii in range(num_train):
-    loss_j = 0.0 # for storing our temporary sum before log
+    current_scores = scores[ii, :]
+
+    # fix for numerical stability by subtracting the max score from the scores vector
+    shift_scores = current_scores - np.max(current_scores)
+
+    # calculate loss
+    loss_ii = -shift_scores[y[ii]] + np.log(np.sum(np.exp(shift_scores)))
+    loss += loss_ii
 
     for jj in range(num_classes):
-      if jj == y[ii]:
-        loss_yi = scores[ii,jj]
-      else:
-        loss_j += np.exp(scores[ii, jj])
-    loss += -loss_yi + np.log(loss_j)
-      
+      softmax_score = np.exp(shift_scores[jj]) / np.sum(np.exp(shift_scores))
 
+      # gradient calculation
+      if jj == y[ii]:
+        dW[:, jj] += (-1 + softmax_score) * X[ii]
+      else:
+        dW[:, jj] += softmax_score * X[ii]
+
+  # average over the batch and add our regularization term
   loss /= num_train
   loss += reg * np.sum(W * W)
 
+  # average over the batch and add derivative of regularization term
+  dW /= num_train
+  dW += 2*reg*W
 
   #############################################################################
   #                          END OF YOUR CODE                                 #
