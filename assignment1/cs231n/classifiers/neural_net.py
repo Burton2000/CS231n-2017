@@ -135,11 +135,7 @@ class TwoLayerNet(object):
     # grads['W1'] should store the gradient on W1, and be a matrix of same size #
     #############################################################################
 
-    #grads['W1'] = np.zeros_like(W1)
-    grads['b1'] = np.zeros_like(b1)
-    grads['b2'] = np.zeros_like(b2)
-
-    # Calculate dScore, the gradient wrt. softmax scores.
+    # Calculate dSoft: the gradient wrt. softmax scores.
     dSoft = softmax_scores
     dSoft[range(N),y] = dSoft[range(N),y] - 1
 
@@ -151,7 +147,7 @@ class TwoLayerNet(object):
 
     # Backprop dScore to calculate db2, then average and add regularisation.
     db2 = dSoft * 1
-    grads['b2'] = np.sum(db2, axis=0, keepdims=True) / N
+    grads['b2'] = np.sum(db2, axis=0) / N
 
     # Backprop dW2 to calculate dRelu1.
     relu_mask = (relu_1_activation > 0)
@@ -165,7 +161,7 @@ class TwoLayerNet(object):
 
     # Backprop dRelu1 to calculate db1
     db1 = dRelu1 * 1
-    grads['b1'] = np.sum(db1, axis=0, keepdims=True)/ N
+    grads['b1'] = np.sum(db1, axis=0)/ N
 
 
     #############################################################################
@@ -211,12 +207,16 @@ class TwoLayerNet(object):
       # TODO: Create a random minibatch of training data and labels, storing  #
       # them in X_batch and y_batch respectively.                             #
       #########################################################################
-      pass
+
+      random_batch = np.random.permutation(num_train)[0:batch_size] # Only take the first batch_size elements.
+      X_batch = X[random_batch,...]
+      y_batch = y[random_batch]
+
       #########################################################################
       #                             END OF YOUR CODE                          #
       #########################################################################
 
-      # Compute loss and gradients using the current minibatch
+      # Compute loss and gradients using the current minibatch.
       loss, grads = self.loss(X_batch, y=y_batch, reg=reg)
       loss_history.append(loss)
 
@@ -226,7 +226,14 @@ class TwoLayerNet(object):
       # using stochastic gradient descent. You'll need to use the gradients   #
       # stored in the grads dictionary defined above.                         #
       #########################################################################
-      pass
+
+      # Gradient descent update.
+      self.params['W1'] += -grads['W1']*learning_rate
+      self.params['b1'] += -grads['b1']*learning_rate
+      self.params['W2'] += -grads['W2']*learning_rate
+      self.params['b2'] += -grads['b2']*learning_rate
+
+
       #########################################################################
       #                             END OF YOUR CODE                          #
       #########################################################################
@@ -271,7 +278,10 @@ class TwoLayerNet(object):
     ###########################################################################
     # TODO: Implement this function; it should be VERY simple!                #
     ###########################################################################
-    pass
+
+    # Get the index of highest score, this is our predicted class.
+    y_pred = np.argmax(self.loss(X), axis=1)
+
     ###########################################################################
     #                              END OF YOUR CODE                           #
     ###########################################################################
