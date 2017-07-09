@@ -86,7 +86,6 @@ def softmax_loss_vectorized(W, X, y, reg):
   # regularization!                                                           #
   #############################################################################
   num_train = X.shape[0]
-  num_classes = W.shape[1]
 
   # Calculate scores and numeric stability fix.
   scores = np.dot(X, W)

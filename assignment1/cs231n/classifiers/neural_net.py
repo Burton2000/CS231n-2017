@@ -81,11 +81,11 @@ class TwoLayerNet(object):
     fc1_activation = np.dot(X,W1) + b1
 
     # Relu layer
-    fc1_activation[fc1_activation < 0 ] = 0
-    relu_1 = fc1_activation
+    relu_1_activation = fc1_activation
+    relu_1_activation[relu_1_activation < 0 ] = 0
 
     # FC2 layer
-    fc2_activation = np.dot(relu_1,W2) + b2
+    fc2_activation = np.dot(relu_1_activation,W2) + b2
 
     # Output scores
     scores = fc2_activation
@@ -107,24 +107,19 @@ class TwoLayerNet(object):
     # classifier loss.                                                          #
     #############################################################################
 
-    softmax_scores = np.zeros_like(scores)
+    # Stability fix for softmax scores
+    shift_scores = scores - np.max(scores, axis=1)[...,np.newaxis]
 
-    for ii in range(N):
-      current_score = scores[ii, :]
-      # numeric stability for our softmax output by subtracing max of the output scores
-      current_score = current_score - np.max(current_score)
-      # compute softmax of our scores
-      exp_current_score = np.exp(current_score)
-      softmax_scores[ii, :] = exp_current_score / np.sum(exp_current_score)
+    # Calculate softmax scores.
+    softmax_scores = np.exp(shift_scores)/ np.sum(np.exp(shift_scores), axis=1)[...,np.newaxis]
 
-      # calculate our cross entropy loss of the softmax classifier
-      sum_softmax_minus_actual = np.sum(exp_current_score)
-      loss = loss + np.log(sum_softmax_minus_actual) - current_score[y[ii]]
+    # Calculate our cross entropy Loss.
+    correct_class_scores = np.choose(y, shift_scores.T) # Size N vector
+    loss = -correct_class_scores + np.log(np.sum(np.exp(shift_scores),axis = 1))
+    loss = np.sum(loss)
 
-    # average the loss over the number of samples
+    # Average the loss & add the regularisation loss: lambda*sum(weights.^2).
     loss /= N
-
-    # add the regularisation loss = lambda*sum(weights.^2)
     loss += reg * (np.sum(W1*W1) + np.sum(W2*W2) + np.sum(b1*b1) + np.sum(b2*b2))
 
 
@@ -139,7 +134,40 @@ class TwoLayerNet(object):
     # and biases. Store the results in the grads dictionary. For example,       #
     # grads['W1'] should store the gradient on W1, and be a matrix of same size #
     #############################################################################
-    pass
+
+    #grads['W1'] = np.zeros_like(W1)
+    grads['b1'] = np.zeros_like(b1)
+    grads['b2'] = np.zeros_like(b2)
+
+    # Calculate dScore, the gradient wrt. softmax scores.
+    dSoft = softmax_scores
+    dSoft[range(N),y] = dSoft[range(N),y] - 1
+
+    # Backprop dScore to calculate dW2, then average and add regularisation.
+    dW2 = np.dot(relu_1_activation.T, dSoft)
+    dW2 /= N
+    dW2 += 2*reg*W2
+    grads['W2'] = dW2
+
+    # Backprop dScore to calculate db2, then average and add regularisation.
+    db2 = dSoft * 1
+    grads['b2'] = np.sum(db2, axis=0, keepdims=True) / N
+
+    # Backprop dW2 to calculate dRelu1.
+    relu_mask = (relu_1_activation > 0)
+    dRelu1= relu_mask*np.dot(dSoft,W2.T)
+
+    # Backprop dRelu1 to calculate dW1
+    dW1 = np.dot(X.T, dRelu1)
+    dW1 /= N
+    dW1 += 2*reg*W1
+    grads['W1'] = dW1
+
+    # Backprop dRelu1 to calculate db1
+    db1 = dRelu1 * 1
+    grads['b1'] = np.sum(db1, axis=0, keepdims=True)/ N
+
+
     #############################################################################
     #                              END OF YOUR CODE                             #
     #############################################################################
