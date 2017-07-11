@@ -1,6 +1,6 @@
 from __future__ import print_function
 from builtins import range
-from past.builtins import xrange
+
 
 import numpy as np
 from random import randrange
