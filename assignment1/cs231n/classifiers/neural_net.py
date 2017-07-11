@@ -135,33 +135,33 @@ class TwoLayerNet(object):
     # grads['W1'] should store the gradient on W1, and be a matrix of same size #
     #############################################################################
 
-    # Calculate dSoft: the gradient wrt. softmax scores.
+    # Calculate dSoft - the gradient wrt softmax scores.
     dSoft = softmax_scores
     dSoft[range(N),y] = dSoft[range(N),y] - 1
+    dSoft /= N  # Don't forget to average over batch
 
-    # Backprop dScore to calculate dW2, then average and add regularisation.
+    # Backprop dScore to calculate dW2 and add regularisation derivative.
     dW2 = np.dot(relu_1_activation.T, dSoft)
-    dW2 /= N
     dW2 += 2*reg*W2
     grads['W2'] = dW2
 
-    # Backprop dScore to calculate db2, then average and add regularisation.
+    # Backprop dScore to calculate db2.
     db2 = dSoft * 1
-    grads['b2'] = np.sum(db2, axis=0) / N
+    grads['b2'] = np.sum(db2, axis=0)
 
-    # Backprop dW2 to calculate dRelu1.
+    # Calculate dx2 and backprop to calculate dRelu1.
+    dx2 = np.dot(dSoft, W2.T)
     relu_mask = (relu_1_activation > 0)
-    dRelu1= relu_mask*np.dot(dSoft,W2.T)
+    dRelu1= relu_mask*dx2
 
-    # Backprop dRelu1 to calculate dW1
+    # Backprop dRelu1 to calculate dW1 and add regularisation derivative.
     dW1 = np.dot(X.T, dRelu1)
-    dW1 /= N
     dW1 += 2*reg*W1
     grads['W1'] = dW1
 
     # Backprop dRelu1 to calculate db1
     db1 = dRelu1 * 1
-    grads['b1'] = np.sum(db1, axis=0)/ N
+    grads['b1'] = np.sum(db1, axis=0)
 
 
     #############################################################################

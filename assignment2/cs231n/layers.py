@@ -26,13 +26,13 @@ def affine_forward(x, w, b):
     # will need to reshape the input into rows.                               #
     ###########################################################################
 
-    # Number of images in the batch
+    # Number of images in the batch.
     NN = x.shape[0]
 
     # Reshape each input in our batch to a vector.
     reshaped_input = np.reshape(x,[NN, -1])
 
-    # FC layer forward pass
+    # FC layer forward pass.
     out = np.dot(reshaped_input, w) + b
 
     ###########################################################################
@@ -63,13 +63,13 @@ def affine_backward(dout, cache):
     # TODO: Implement the affine backward pass.                               #
     ###########################################################################
 
-    # Number of images in the batch
+    # Number of images in the batch.
     NN = x.shape[0]
 
-    # Reshape ecah input in our batch to a vector.
+    # Reshape each input in our batch to a vector.
     reshaped_x = np.reshape(x,[NN, -1])
 
-    # Calculate dx = w*dout, remember to reshape back to shape of x
+    # Calculate dx = w*dout - remember to reshape back to shape of x.
     dx = np.dot(dout, w.T)
     dx = np.reshape(dx, x.shape)
 
@@ -77,7 +77,7 @@ def affine_backward(dout, cache):
     dw = np.dot(reshaped_x.T,dout)
 
     # Calculate db = dout
-    db = np.sum(dout,axis=0)
+    db = np.sum(dout, axis=0)
 
     ###########################################################################
     #                             END OF YOUR CODE                            #
@@ -102,7 +102,7 @@ def relu_forward(x):
     ###########################################################################
 
     # Forward Relu.
-    out = x.copy() # Must use copy in numpy to avoid pass by reference
+    out = x.copy()  # Must use copy in numpy to avoid pass by reference.
     out[out < 0] = 0
 
     ###########################################################################
@@ -130,8 +130,8 @@ def relu_backward(dout, cache):
     # TODO: Implement the ReLU backward pass.                                 #
     ###########################################################################
 
+    # For Relu we only backprop to non-negative elements of x
     relu_mask = (x >= 0)
-
     dx = dout * relu_mask
 
     ###########################################################################
