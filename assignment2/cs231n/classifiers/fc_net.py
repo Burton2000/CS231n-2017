@@ -49,7 +49,7 @@ class TwoLayerNet(object):
         ############################################################################
 
         self.params['W1'] = np.random.normal(0, weight_scale, [input_dim, hidden_dim])
-        self.params['b1'] = np.zeros([input_dim])
+        self.params['b1'] = np.zeros([hidden_dim])
         self.params['W2'] = np.random.normal(0, weight_scale, [hidden_dim, num_classes])
         self.params['b2'] = np.zeros([num_classes])
 
@@ -195,7 +195,13 @@ class FullyConnectedNet(object):
         # beta2, etc. Scale parameters should be initialized to one and shift      #
         # parameters should be initialized to zero.                                #
         ############################################################################
-        pass
+
+        # Initialise the weights and biases for each fully connected layer.
+        for i in range(self.num_layers - 1):
+            self.params['W' + str(i+1)] = np.random.normal(0, weight_scale, [input_dim, hidden_dims[i]])
+            self.params['b' + str(i+1)] = np.zeros([hidden_dims[i]])
+            input_dim = hidden_dims[i]  # Set the input dim of next layer to be output dim of current layer.
+
         ############################################################################
         #                             END OF YOUR CODE                             #
         ############################################################################
