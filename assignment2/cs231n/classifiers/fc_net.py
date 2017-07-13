@@ -196,11 +196,15 @@ class FullyConnectedNet(object):
         # parameters should be initialized to zero.                                #
         ############################################################################
 
-        # Initialise the weights and biases for each fully connected layer.
+        # Initialise the weights and biases for each fully connected layer connected to a Relu.
         for i in range(self.num_layers - 1):
             self.params['W' + str(i+1)] = np.random.normal(0, weight_scale, [input_dim, hidden_dims[i]])
             self.params['b' + str(i+1)] = np.zeros([hidden_dims[i]])
             input_dim = hidden_dims[i]  # Set the input dim of next layer to be output dim of current layer.
+
+        # Initialise the weights and biases for final FC layer
+        self.params['W' + str(self.num_layers)] = np.random.normal(0, weight_scale, [input_dim, num_classes])
+        self.params['b' + str(self.num_layers)] = np.zeros([num_classes])
 
         ############################################################################
         #                             END OF YOUR CODE                             #
@@ -262,18 +266,18 @@ class FullyConnectedNet(object):
 
         fc_cache = {}
         relu_cache = {}
-
         batch_size = X.shape[0]
-        X = np.reshape(X, [batch_size, -1])
 
-        for i in range(self.num_layers-2):
-            fc_act, fc_cache[str(i)] = affine_forward(X, self.params['W'+str(i+1)], self.params['b'+str(i+1)])
-            relu_act, relu_cache[str(i)] = relu_forward(fc_act)
-            X = relu_act.copy()
+        X = np.reshape(X, [batch_size, -1])  # Flatten our input images.
 
+        # Do as many FC-Relu forward pass as required (num_layers - 1).
+        for i in range(self.num_layers-1):
+            fc_act, fc_cache[str(i+1)] = affine_forward(X, self.params['W'+str(i+1)], self.params['b'+str(i+1)])
+            relu_act, relu_cache[str(i+1)] = relu_forward(fc_act)
+            X = relu_act.copy()  # Result of one FC-Relu
 
-
-        scores, final_cache = affine_forward(X, self.params['W'+str(self.num_layers-1)],self.params['b'+str(self.num_layers-1)])
+        # Final output layer is FC layer with no relu.
+        scores, final_cache = affine_forward(X, self.params['W'+str(self.num_layers)], self.params['b'+str(self.num_layers)])
 
         ############################################################################
         #                             END OF YOUR CODE                             #
@@ -297,12 +301,28 @@ class FullyConnectedNet(object):
         # automated tests, make sure that your L2 regularization includes a factor #
         # of 0.5 to simplify the expression for the gradient.                      #
         ############################################################################
+
+        # Calculate score loss and add reg. loss for last FC layer.
         loss, dsoft = softmax_loss(scores, y)
+        loss += 0.5*self.reg*(np.sum(np.square(self.params['W'+str(self.num_layers)])))
 
-        loss += 0.5*self.reg*(np.sum(np.square(self.params['W'+str])))
+        # Backprop dsoft to the last FC layer to calculate gradients.
+        dx_last, dw_last, db_last = affine_backward(dsoft, final_cache)
 
+        grads['W'+str(self.num_layers)] = dw_last + self.reg*self.params['W'+str(self.num_layers)]
+        grads['b'+str(self.num_layers)] = db_last
 
-        for i in range(self.num_layers)
+        # Iteratively backprop through each Relu & FC layer to calculate gradients.
+        for i in range(self.num_layers-1, 0, -1):
+            drelu = relu_backward(dx_last, relu_cache[str(i)])
+            dx_last, dw_last, db_last = affine_backward(drelu, fc_cache[str(i)])
+
+            # Store gradients.
+            grads['W' + str(i)] = dw_last + self.reg * self.params['W' + str(i)]
+            grads['b' + str(i)] = db_last
+
+            # Add reg. loss for each other FC layer.
+            loss += 0.5 * self.reg * (np.sum(np.square(self.params['W' + str(i)])))
 
 
         ############################################################################
