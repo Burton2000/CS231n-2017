@@ -203,7 +203,25 @@ def batchnorm_forward(x, gamma, beta, bn_param):
         # variance, storing your result in the running_mean and running_var   #
         # variables.                                                          #
         #######################################################################
-        pass
+
+        # Take sample mean and var of our minibatch for each dimension.
+        sample_mean = np.mean(x, axis=0)
+        sample_var = np.var(x, axis=0)
+
+        # Normalise our batch then shift and scale with gamme/beta.
+        normalized_data = (x - sample_mean) / np.sqrt(sample_var + eps)
+        out = gamma * normalized_data + beta
+
+        # Update our running mean and variance.
+        running_mean = momentum * running_mean + (1 - momentum) * sample_mean
+        running_var = momentum * running_var + (1 - momentum) * sample_var
+
+        # Store running mean and var.
+        bn_param['running_mean'] = running_mean
+        bn_param['running_var'] = running_var
+
+        # Store results needed for backward pass.
+        #cache['']
         #######################################################################
         #                           END OF YOUR CODE                          #
         #######################################################################
@@ -214,7 +232,10 @@ def batchnorm_forward(x, gamma, beta, bn_param):
         # then scale and shift the normalized data using gamma and beta.      #
         # Store the result in the out variable.                               #
         #######################################################################
-        pass
+
+        # Test time batch norm using learned gamma/beta and calculated running mean/var.
+        out = (gamma / (np.sqrt(running_var + eps)) * x) + (beta - (gamma*running_mean)/np.sqrt(running_var + eps))
+
         #######################################################################
         #                          END OF YOUR CODE                           #
         #######################################################################
