@@ -200,11 +200,18 @@ class FullyConnectedNet(object):
         for i in range(self.num_layers - 1):
             self.params['W' + str(i+1)] = np.random.normal(0, weight_scale, [input_dim, hidden_dims[i]])
             self.params['b' + str(i+1)] = np.zeros([hidden_dims[i]])
+
+            if self.use_batchnorm:
+                self.params['beta' + str(i+1)] = np.zeros([hidden_dims[i]])
+                self.params['gamma' + str(i+1)] = np.ones([hidden_dims[i]])
+
             input_dim = hidden_dims[i]  # Set the input dim of next layer to be output dim of current layer.
 
         # Initialise the weights and biases for final FC layer
         self.params['W' + str(self.num_layers)] = np.random.normal(0, weight_scale, [input_dim, num_classes])
         self.params['b' + str(self.num_layers)] = np.zeros([num_classes])
+
+
 
         ############################################################################
         #                             END OF YOUR CODE                             #
@@ -266,6 +273,7 @@ class FullyConnectedNet(object):
 
         fc_cache = {}
         relu_cache = {}
+        bn_cache = {}
         batch_size = X.shape[0]
 
         X = np.reshape(X, [batch_size, -1])  # Flatten our input images.
@@ -273,7 +281,11 @@ class FullyConnectedNet(object):
         # Do as many FC-Relu forward pass as required (num_layers - 1).
         for i in range(self.num_layers-1):
             fc_act, fc_cache[str(i+1)] = affine_forward(X, self.params['W'+str(i+1)], self.params['b'+str(i+1)])
-            relu_act, relu_cache[str(i+1)] = relu_forward(fc_act)
+            if self.use_batchnorm:
+                bn_act, bn_cache[str(i+1)] = batchnorm_forward(fc_act, self.params['gamma'+str(i+1)], self.params['beta'+str(i+1)], self.bn_params[i])
+                relu_act, relu_cache[str(i+1)] = relu_forward(bn_act)
+            else:
+                relu_act, relu_cache[str(i+1)] = relu_forward(fc_act)
             X = relu_act.copy()  # Result of one FC-Relu
 
         # Final output layer is FC layer with no relu.
@@ -314,8 +326,16 @@ class FullyConnectedNet(object):
 
         # Iteratively backprop through each Relu & FC layer to calculate gradients.
         for i in range(self.num_layers-1, 0, -1):
+
             drelu = relu_backward(dx_last, relu_cache[str(i)])
-            dx_last, dw_last, db_last = affine_backward(drelu, fc_cache[str(i)])
+
+            if self.use_batchnorm:
+                dbatchnorm, dgamma, dbeta = batchnorm_backward(drelu, bn_cache[str(i)])
+                dx_last, dw_last, db_last = affine_backward(dbatchnorm, fc_cache[str(i)])
+                grads['beta' + str(i)] = dbeta
+                grads['gamma' + str(i)] = dgamma
+            else:
+                dx_last, dw_last, db_last = affine_backward(drelu, fc_cache[str(i)])
 
             # Store gradients.
             grads['W' + str(i)] = dw_last + self.reg * self.params['W' + str(i)]

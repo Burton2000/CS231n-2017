@@ -204,24 +204,29 @@ def batchnorm_forward(x, gamma, beta, bn_param):
         # variables.                                                          #
         #######################################################################
 
-        # Take sample mean and var of our minibatch for each dimension.
+        # Take sample mean & var of our minibatch across each dimension.
         sample_mean = np.mean(x, axis=0)
         sample_var = np.var(x, axis=0)
 
-        # Normalise our batch then shift and scale with gamme/beta.
+        # Normalise our batch then shift and scale with gamma/beta.
         normalized_data = (x - sample_mean) / np.sqrt(sample_var + eps)
         out = gamma * normalized_data + beta
 
-        # Update our running mean and variance.
+        # Update our running mean and variance then store.
         running_mean = momentum * running_mean + (1 - momentum) * sample_mean
         running_var = momentum * running_var + (1 - momentum) * sample_var
-
-        # Store running mean and var.
         bn_param['running_mean'] = running_mean
         bn_param['running_var'] = running_var
 
-        # Store results needed for backward pass.
-        #cache['']
+        # Store intermediate results needed for backward pass.
+        cache = {
+            'x_minus_mean': (x - sample_mean),
+            'normalized_data': normalized_data,
+            'gamma': gamma,
+            'ivar': 1./np.sqrt(sample_var + eps),
+            'sqrtvar': np.sqrt(sample_var + eps),
+        }
+
         #######################################################################
         #                           END OF YOUR CODE                          #
         #######################################################################
@@ -271,7 +276,42 @@ def batchnorm_backward(dout, cache):
     # TODO: Implement the backward pass for batch normalization. Store the    #
     # results in the dx, dgamma, and dbeta variables.                         #
     ###########################################################################
-    pass
+
+    N, D = dout.shape
+    normalized_data = cache.get('normalized_data')
+    gamma = cache.get('gamma')
+    ivar = cache.get('ivar')
+    x_minus_mean = cache.get('x_minus_mean')
+    sqrtvar = cache.get('sqrtvar')
+
+    # Backprop dout to calculate dbeta and dgamma.
+    dbeta = np.sum(dout, axis=0)
+    dgamma = np.sum(dout * normalized_data, axis=0)
+
+    # Carry on the backprop in steps to calculate dx.
+
+    # Step1
+    dxhat = dout*gamma
+    # Step2
+    dxmu1 = dxhat*ivar
+    # Step3
+    divar = np.sum(dxhat*x_minus_mean, axis=0)
+    # Step4
+    dsqrtvar = divar * (-1/sqrtvar**2)
+    # Step5
+    dvar = dsqrtvar * 0.5 * (1/sqrtvar)
+    # Step6
+    dsq = (1/N)*dvar*np.ones_like(dout)
+    # Step7
+    dxmu2 = dsq * 2 * x_minus_mean
+    # Step8
+    dx1 = dxmu1 + dxmu2
+    dmu = -1*np.sum(dxmu1 + dxmu2, axis=0)
+    # Step9
+    dx2 = (1/N)*dmu*np.ones_like(dout)
+    # Step10
+    dx = dx2 + dx1
+
     ###########################################################################
     #                             END OF YOUR CODE                            #
     ###########################################################################
