@@ -290,7 +290,6 @@ def batchnorm_backward(dout, cache):
     dgamma = np.sum(dout * normalized_data, axis=0)
 
     # Carry on the backprop in steps to calculate dx.
-
     # Step1
     dxhat = dout*gamma
     # Step2
@@ -342,6 +341,7 @@ def batchnorm_backward_alt(dout, cache):
     # should be able to compute gradients with respect to the inputs in a     #
     # single statement; our implementation fits on a single 80-character line.#
     ###########################################################################
+
     N, D = dout.shape
     normalized_data = cache.get('normalized_data')
     gamma = cache.get('gamma')
@@ -393,12 +393,16 @@ def dropout_forward(x, dropout_param):
         # Store the dropout mask in the mask variable.                        #
         #######################################################################
 
-        dropout_scale_factor = 1/(1-p)
+        # Ref on dropout: http://cs231n.github.io/neural-networks-2/
 
+        # During training randomly drop out neurons with probability P, here we create the mask that does this.
         mask = (np.random.random_sample(x.shape) >= p)
 
+        # Inverted dropout scales the remaining neurons during training so we don't have to at test time.
+        dropout_scale_factor = 1/(1-p)
         mask = mask*dropout_scale_factor
 
+        # Apply the dropout mask to the input.
         out = x*mask
 
         #######################################################################
@@ -409,6 +413,7 @@ def dropout_forward(x, dropout_param):
         # TODO: Implement the test phase forward pass for inverted dropout.   #
         #######################################################################
 
+        # Test time we don't drop anything so just pass input through, also scaling was done during training.
         out = x
 
         #######################################################################
@@ -437,7 +442,10 @@ def dropout_backward(dout, cache):
         #######################################################################
         # TODO: Implement training phase backward pass for inverted dropout   #
         #######################################################################
-        pass
+
+        # Only backprop to the neurons we didn't drop.
+        dx = dout*mask*1
+
         #######################################################################
         #                          END OF YOUR CODE                           #
         #######################################################################

@@ -274,19 +274,25 @@ class FullyConnectedNet(object):
         fc_cache = {}
         relu_cache = {}
         bn_cache = {}
+        dropout_cache = {}
         batch_size = X.shape[0]
 
         X = np.reshape(X, [batch_size, -1])  # Flatten our input images.
 
-        # Do as many FC-Relu forward pass as required (num_layers - 1).
+        # Do as many Affine-Relu forward passes as required (num_layers - 1).
+        # Apply batch norm and dropout as required.
         for i in range(self.num_layers-1):
+
             fc_act, fc_cache[str(i+1)] = affine_forward(X, self.params['W'+str(i+1)], self.params['b'+str(i+1)])
             if self.use_batchnorm:
                 bn_act, bn_cache[str(i+1)] = batchnorm_forward(fc_act, self.params['gamma'+str(i+1)], self.params['beta'+str(i+1)], self.bn_params[i])
                 relu_act, relu_cache[str(i+1)] = relu_forward(bn_act)
             else:
                 relu_act, relu_cache[str(i+1)] = relu_forward(fc_act)
-            X = relu_act.copy()  # Result of one FC-Relu
+            if self.use_dropout:
+                relu_act, dropout_cache[str(i+1)] = dropout_forward(relu_act, self.dropout_param)
+
+            X = relu_act.copy()  # Result of one pass through the affine-relu block.
 
         # Final output layer is FC layer with no relu.
         scores, final_cache = affine_forward(X, self.params['W'+str(self.num_layers)], self.params['b'+str(self.num_layers)])
@@ -321,11 +327,16 @@ class FullyConnectedNet(object):
         # Backprop dsoft to the last FC layer to calculate gradients.
         dx_last, dw_last, db_last = affine_backward(dsoft, final_cache)
 
+        # Store gradients of the last FC layer
         grads['W'+str(self.num_layers)] = dw_last + self.reg*self.params['W'+str(self.num_layers)]
         grads['b'+str(self.num_layers)] = db_last
 
         # Iteratively backprop through each Relu & FC layer to calculate gradients.
+        # Go through batchnorm and dropout layers if needed.
         for i in range(self.num_layers-1, 0, -1):
+
+            if self.use_dropout:
+                dx_last = dropout_backward(dx_last, dropout_cache[str(i)])
 
             drelu = relu_backward(dx_last, relu_cache[str(i)])
 
