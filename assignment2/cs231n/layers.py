@@ -482,7 +482,32 @@ def conv_forward_naive(x, w, b, conv_param):
     # TODO: Implement the convolutional forward pass.                         #
     # Hint: you can use the function np.pad for padding.                      #
     ###########################################################################
-    pass
+
+    pad = conv_param.get('pad')
+    stride = conv_param.get('stride')
+
+    # Input and filter shapes.
+    N, C, H, W = x.shape
+    F, C, HH, WW = w.shape
+
+    # Zero pad our tensor along the spatial dimensions.
+    padded_x = (np.pad(x, ((0, 0), (0, 0), (pad, pad), (pad, pad)), 'constant'))
+
+    # Calculate output spatial dimensions.
+    out_H = np.int(((H + 2*pad - HH) / stride) + 1)
+    out_W = np.int(((W + 2*pad - WW) / stride) + 1)
+
+    # Initialise the output.
+    out = np.zeros([N, F, out_H, out_W])
+
+    # Naive convolution loop.
+    for nn in range(N):  # For each image in the input batch.
+        for ff in range(F):  # For each filter in w
+            for jj in range(0, out_H):  # For each output pixel height
+                for ii in range(0, out_W):  # For each output pixel width
+                    out[nn, ff, jj, ii] = \
+                        np.sum(w[ff, ...] * padded_x[nn, :, jj*stride:jj*stride+HH, ii*stride:ii*stride+WW]) + b[ff]
+
     ###########################################################################
     #                             END OF YOUR CODE                            #
     ###########################################################################
@@ -507,7 +532,43 @@ def conv_backward_naive(dout, cache):
     ###########################################################################
     # TODO: Implement the convolutional backward pass.                        #
     ###########################################################################
-    pass
+
+    x, w, b, conv_param = cache
+    stride = conv_param.get('stride')
+    pad = conv_param.get('pad')
+    padded_x = (np.pad(x, ((0, 0), (0, 0), (pad, pad), (pad, pad)), 'constant'))
+    # Input and filter shapes.
+    N, C, H, W = x.shape
+    F, C, HH, WW = w.shape
+    N, F, H_out, W_out = dout.shape
+
+    dx = np.zeros_like(x)
+    dw = np.zeros_like(w)
+    db = np.zeros_like(b)
+
+    # Calculate dB.
+    # Just like in the affine layer we sum up all the incoming gradients for each filters bias.
+    for ff in range(F):
+        db[ff] += np.sum(dout[:, ff, :, :])
+
+    # Calculate dw.
+    # By chain rule dw is dout*x
+    for nn in range(N):
+        for ff in range(F):
+            for jj in range(H_out):
+                for ii in range(W_out):
+                    dw[ff, ...] += dout[nn, ff, jj, ii] * padded_x[nn,:,jj*stride:jj*stride+HH,ii*stride:ii*stride+WW]
+
+
+
+    # Calculate dx.
+    #for nn in range(N):
+    #    for ff in range(F):
+    #        for jj in range()
+
+
+
+
     ###########################################################################
     #                             END OF YOUR CODE                            #
     ###########################################################################
