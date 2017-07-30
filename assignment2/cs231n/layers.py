@@ -542,7 +542,7 @@ def conv_backward_naive(dout, cache):
     F, C, HH, WW = w.shape
     N, F, H_out, W_out = dout.shape
 
-    dx = np.zeros_like(x)
+    dx_temp = np.zeros_like(padded_x)
     dw = np.zeros_like(w)
     db = np.zeros_like(b)
 
@@ -559,15 +559,16 @@ def conv_backward_naive(dout, cache):
                 for ii in range(W_out):
                     dw[ff, ...] += dout[nn, ff, jj, ii] * padded_x[nn,:,jj*stride:jj*stride+HH,ii*stride:ii*stride+WW]
 
-
-
     # Calculate dx.
-    #for nn in range(N):
-    #    for ff in range(F):
-    #        for jj in range()
+    # By chain rule dx is dout*w. We need to make dx same shape as padded x for the gradient calculation.
+    for nn in range(N):
+        for ff in range(F):
+            for jj in range(H):
+                for ii in range(W):
+                    dx_temp[nn, :, jj*stride:jj*stride+HH,ii*stride:ii*stride+WW] += dout[nn, ff, jj ,ii] * w[ff, ...]
 
-
-
+    # Remove the padding so dx matches the shape of x
+    dx = dx_temp[:, :, pad:H+pad , pad:W+pad]
 
     ###########################################################################
     #                             END OF YOUR CODE                            #
@@ -594,7 +595,27 @@ def max_pool_forward_naive(x, pool_param):
     ###########################################################################
     # TODO: Implement the max pooling forward pass                            #
     ###########################################################################
-    pass
+
+    # Grab the pooling parameters.
+    pool_height = pool_param.get('pool_height')
+    pool_width = pool_param.get('pool_width')
+    stride = pool_param.get('stride')
+
+    N, C, H, W = x.shape
+
+    # Calculate output spatial dimensions.
+    out_H = np.int(((H - pool_height) / stride) + 1)
+    out_W = np.int(((W - pool_width) / stride) + 1)
+
+    # Initialise output.
+    out = np.zeros([N, C, out_H, out_W])
+
+    for n in range(N):
+        for c in range(C):
+            for j in range(out_H):
+                for i in range(out_W):
+                    out[n, c, j, i] = np.max(x[n,c, j*stride:j*stride+pool_height, i*stride:i*stride+pool_width])
+
     ###########################################################################
     #                             END OF YOUR CODE                            #
     ###########################################################################
