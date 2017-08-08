@@ -6,5 +6,4 @@ These are my solutions to the CS231n Spring 2017 course from Stanford University
 * Assignment 1
 ## In progress
 * Assignment 2
-## Future 
 * Assignment 3
