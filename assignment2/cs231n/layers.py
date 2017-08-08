@@ -342,6 +342,7 @@ def batchnorm_backward_alt(dout, cache):
     # single statement; our implementation fits on a single 80-character line.#
     ###########################################################################
 
+    # Get cached variables from foward pass.
     N, D = dout.shape
     normalized_data = cache.get('normalized_data')
     gamma = cache.get('gamma')
@@ -350,11 +351,13 @@ def batchnorm_backward_alt(dout, cache):
     sqrtvar = cache.get('sqrtvar')
 
     # Backprop dout to calculate dbeta and dgamma.
-    #dbeta = np.sum(dout, axis=0)
-    #dgamma = np.sum(dout * normalized_data, axis=0)
+    dbeta = np.sum(dout, axis=0)
+    dgamma = np.sum(dout * normalized_data, axis=0)
 
-    pass
-    ###########################################################################
+    # Alternative faster formula way of calculating dx. ref: http://cthorey.github.io./backpropagation/
+    dx =(1 / N) * gamma * 1/sqrtvar * ((N * dout) - np.sum(dout, axis=0) - (x_minus_mean) * np.square(ivar) * np.sum(dout * (x_minus_mean), axis=0))
+
+###########################################################################
     #                             END OF YOUR CODE                            #
     ###########################################################################
 
