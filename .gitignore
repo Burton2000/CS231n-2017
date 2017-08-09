@@ -45,3 +45,21 @@ $RECYCLE.BIN/
 Network Trash Folder
 Temporary Items
 .apdisk
+assignment3/cs231n/datasets/coco_captioning/coco2014_captions.h5
+assignment3/cs231n/datasets/coco_captioning/coco2014_vocab.json
+assignment3/cs231n/datasets/coco_captioning/train2014_images.txt
+assignment3/cs231n/datasets/coco_captioning/train2014_vgg16_fc7.h5
+assignment3/cs231n/datasets/coco_captioning/train2014_vgg16_fc7_pca.h5
+assignment3/cs231n/datasets/coco_captioning/train2014_urls.txt
+assignment3/cs231n/datasets/coco_captioning/val2014_images.txt
+assignment3/cs231n/datasets/coco_captioning/val2014_urls.txt
+assignment3/cs231n/datasets/coco_captioning/val2014_vgg16_fc7.h5
+assignment3/cs231n/datasets/coco_captioning/val2014_vgg16_fc7_pca.h5
+assignment3/cs231n/datasets/imagenet_val_25.npz
+assignment3/cs231n/datasets/label_map.npy
+assignment3/cs231n/datasets/squeezenet.ckpt.data-00000-of-00001
+assignment3/cs231n/datasets/squeezenet.ckpt.index
+assignment3/cs231n/datasets/squeezenet.ckpt.meta
+assignment3/cs231n/datasets/squeezenet_tf.zip
+assignment3/cs231n/datasets/X.npy
+assignment3/cs231n/datasets/y.npy
