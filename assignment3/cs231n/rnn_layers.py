@@ -212,7 +212,11 @@ def word_embedding_forward(x, W):
     #                                                                            #
     # HINT: This can be done in one line using NumPy's array indexing.           #
     ##############################################################################
-    pass
+
+    # For each element in x we get its corresponding word embedding vector from W.
+    out = W[x, :]
+
+    cache = x, W
     ##############################################################################
     #                               END OF YOUR CODE                             #
     ##############################################################################
@@ -240,8 +244,16 @@ def word_embedding_backward(dout, cache):
     #                                                                            #
     # Note that Words can appear more than once in a sequence.                   #
     # HINT: Look up the function np.add.at                                       #
+    # https://docs.scipy.org/doc/numpy/reference/generated/numpy.ufunc.at.html   #                                    #
     ##############################################################################
-    pass
+
+    # Get caches variables and initialise dW.
+    x, W = cache
+    dW = np.zeros_like(W)
+
+    # Adds the upcoming gradients into the corresponding index from W.
+    np.add.at(dW, x, dout)
+
     ##############################################################################
     #                               END OF YOUR CODE                             #
     ##############################################################################
