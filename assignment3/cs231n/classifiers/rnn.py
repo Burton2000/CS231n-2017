@@ -241,7 +241,27 @@ class CaptioningRNN(object):
         # functions; you'll need to call rnn_step_forward or lstm_step_forward in #
         # a loop.                                                                 #
         ###########################################################################
-        pass
+
+        # Calculate initial hidden state h0 from our image features and learned transform.
+        prev_hidden_state, _ = affine_forward(features, W_proj, b_proj)
+
+        # Embed our start token, will broadcast to size N.
+        word_embed, _ = word_embedding_forward(self._start, W_embed)
+
+        for i in range(max_length):
+            # One step forward of our RNN to get the new hidden state.
+            cur_hidden_state, _ = rnn_step_forward(word_embed, prev_hidden_state, Wx, Wh, b)
+
+            # Output the scores for this current time step
+            cur_scores, _ = affine_forward(cur_hidden_state, W_vocab, b_vocab)
+
+            # Find the highest value index and assign it to the rigth place in captions.
+            captions[:,i] = np.argmax(cur_scores,axis=1)
+
+            # Embed the word that was just produced for the next iteration also current hidden state becomes previous.
+            word_embed, _ = word_embedding_forward(captions[:,i], W_embed)
+            prev_hidden_state = cur_hidden_state
+
         ############################################################################
         #                             END OF YOUR CODE                             #
         ############################################################################
