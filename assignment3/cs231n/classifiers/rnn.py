@@ -138,9 +138,8 @@ class CaptioningRNN(object):
         # gradients for self.params[k].                                            #
         ############################################################################
 
-        # FORWARD PASS to calculate scores and loss.
-
-        # Transform our image feature from CNN to be our initial hidden state.
+        # FORWARD PASS.
+        # Transform CNN image feature to be the initial hidden state.
         inital_hidden_state, cache_initial = affine_forward(features, W_proj, b_proj)
 
         # Embed the input word captions.
@@ -150,17 +149,13 @@ class CaptioningRNN(object):
         if self.cell_type == 'rnn':
             rnn_outputs, cache_rnn = rnn_forward(embedded_captions, inital_hidden_state, Wx, Wh, b)
         elif self.cell_type == 'lstm':
-            pass
+            rnn_outputs, cache_rnn = lstm_forward(embedded_captions, inital_hidden_state, Wx, Wh, b)
 
-        # Calculate scores for each timesteps output of the RNN.
+        # Scores and loss.
         scores, cache_scores = temporal_affine_forward(rnn_outputs, W_vocab, b_vocab)
-
-        # Calculate loss for our predicted scores.
         loss, dsoftmax = temporal_softmax_loss(scores, captions_out, mask)
 
-
-        # BACKWARD PASS to calculate gradients.
-
+        # BACKWARD PASS.
         # Backprop dsoftmax to calculate gradient for W_vocab, b_vocab.
         dscores, dW_vocab, db_vocab = temporal_affine_backward(dsoftmax, cache_scores)
         grads['W_vocab'], grads['b_vocab'] = dW_vocab, db_vocab
@@ -168,9 +163,10 @@ class CaptioningRNN(object):
         # Backprop dscores through the RNN module calculating all gradients.
         if self.cell_type == 'rnn':
             dx, dh0, dWx, dWh, db = rnn_backward(dscores, cache_rnn)
-            grads['b'], grads['Wh'] , grads['Wx'] = db, dWh, dWx
+            grads['b'], grads['Wh'], grads['Wx'] = db, dWh, dWx
         elif self.cell_type == 'lstm':
-            pass
+            dx, dh0, dWx, dWh, db = lstm_backward(dscores, cache_rnn)
+            grads['b'], grads['Wh'], grads['Wx'] = db, dWh, dWx
 
         # Backprop dx to get gradient for word embedding weights.
         dW_embed = word_embedding_backward(dx, cache_word_embedding)
@@ -243,24 +239,30 @@ class CaptioningRNN(object):
         ###########################################################################
 
         # Calculate initial hidden state h0 from our image features and learned transform.
-        prev_hidden_state, _ = affine_forward(features, W_proj, b_proj)
+        cur_hidden_state, _ = affine_forward(features, W_proj, b_proj)
+
+        if self.cell_type == 'lstm':
+            cur_cell_state = np.zeros_like(cur_hidden_state)
 
         # Embed our start token, will broadcast to size N.
         word_embed, _ = word_embedding_forward(self._start, W_embed)
 
+        # Sample max_length number of words.
         for i in range(max_length):
-            # One step forward of our RNN to get the new hidden state.
-            cur_hidden_state, _ = rnn_step_forward(word_embed, prev_hidden_state, Wx, Wh, b)
 
-            # Output the scores for this current time step
+            if self.cell_type == 'rnn':
+                cur_hidden_state, _ = rnn_step_forward(word_embed, cur_hidden_state, Wx, Wh, b)
+            elif self.cell_type == 'lstm':
+                cur_hidden_state, cur_cell_state, _ = lstm_step_forward(word_embed, cur_hidden_state, cur_cell_state, Wx, Wh, b)
+
+            # Scores for this current time step.
             cur_scores, _ = affine_forward(cur_hidden_state, W_vocab, b_vocab)
 
-            # Find the highest value index and assign it to the rigth place in captions.
-            captions[:,i] = np.argmax(cur_scores,axis=1)
+            # Find the highest value index and assign it to the correct place in captions.
+            captions[:,i] = np.argmax(cur_scores, axis=1)
 
-            # Embed the word that was just produced for the next iteration also current hidden state becomes previous.
-            word_embed, _ = word_embedding_forward(captions[:,i], W_embed)
-            prev_hidden_state = cur_hidden_state
+            # Embed the word produced for the next iteration.
+            word_embed, _ = word_embedding_forward(captions[:, i], W_embed)
 
         ############################################################################
         #                             END OF YOUR CODE                             #
