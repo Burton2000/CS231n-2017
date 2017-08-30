@@ -4,7 +4,9 @@ These are my solutions to the CS231n Spring 2017 course from Stanford University
 
 ## Completed
 * Assignment 1
-* Assignment 3
-## In progress
 * Assignment 2
+* Assignment 3
+
+## Future work
 * Extra credit tasks
+* Clean up commenting
