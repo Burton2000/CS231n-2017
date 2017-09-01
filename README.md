@@ -10,5 +10,3 @@ These are my solutions to the CS231n Spring 2017 course from Stanford University
 ## Future work
 * Extra credit tasks
 * Assignment 3 Tensorflow version
-* Clean up commenting
-
