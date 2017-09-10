@@ -4,6 +4,9 @@ These are my solutions to the CS231n Spring 2017 course from Stanford University
 
 ## Completed
 * Assignment 1
-## In progress
-* Assignment 2
-* Assignment 3
+* Assignment 2 
+* Assignment 3 (PyTorch version)
+
+## Future work
+* Extra credit tasks
+* Assignment 3 Tensorflow version

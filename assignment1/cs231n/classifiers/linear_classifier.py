@@ -57,13 +57,12 @@ class LinearClassifier(object):
       # replacement is faster than sampling without replacement.              #
       #########################################################################
 
-      # choose batch_size random values from X_indices
+      # Choose 'batch_size' random values from X_indices.
       batch_indices = np.random.choice(X_indices,batch_size)
-      # get our batch from these indices
+
+      # Get our batch from these indices.
       X_batch = X[batch_indices]
       y_batch = y[batch_indices]
-      #print(X_batch.shape)
-      #print(y_batch.shape)
 
       #########################################################################
       #                       END OF YOUR CODE                                #
@@ -79,7 +78,7 @@ class LinearClassifier(object):
       # Update the weights using the gradient and the learning rate.          #
       #########################################################################
 
-      # gradient descent basic rule is just: weights += -(learning_rate * dW)
+      # Gradient descent basic rule is just: weights += -(learning_rate * dW).
       self.W += -(learning_rate * grad)
 
       #########################################################################
@@ -113,7 +112,6 @@ class LinearClassifier(object):
 
     pred_scores = np.dot(X,self.W)
     y_pred = np.argmax(pred_scores, axis=1)
-
 
     ###########################################################################
     #                           END OF YOUR CODE                              #
