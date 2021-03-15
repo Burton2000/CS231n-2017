@@ -107,20 +107,20 @@ class TwoLayerNet(object):
     # classifier loss.                                                          #
     #############################################################################
 
-    # Stability fix for softmax scores
+    # Stability fix for softmax scores.
     shift_scores = scores - np.max(scores, axis=1)[..., np.newaxis]
 
     # Calculate softmax scores.
     softmax_scores = np.exp(shift_scores) / np.sum(np.exp(shift_scores), axis=1)[..., np.newaxis]
 
     # Calculate our cross entropy Loss.
-    correct_class_scores = np.choose(y, shift_scores.T) # Size N vector
+    correct_class_scores = np.choose(y, shift_scores.T)  # Size N vector
     loss = -correct_class_scores + np.log(np.sum(np.exp(shift_scores), axis=1))
     loss = np.sum(loss)
 
     # Average the loss & add the regularisation loss: lambda*sum(weights.^2).
     loss /= N
-    loss += reg * (np.sum(W1*W1) + np.sum(W2*W2) + np.sum(b1*b1) + np.sum(b2*b2))
+    loss += reg * (np.sum(W1*W1) + np.sum(W2*W2))
 
     #############################################################################
     #                              END OF YOUR CODE                             #
@@ -139,19 +139,19 @@ class TwoLayerNet(object):
     dSoft[range(N),y] = dSoft[range(N),y] - 1
     dSoft /= N  # Average over batch.
 
-    # Backprop dScore to calculate dW2 and add regularisation derivative.
+    # Backprop dSoft to calculate dW2 and add regularisation derivative.
     dW2 = np.dot(relu_1_activation.T, dSoft)
     dW2 += 2*reg*W2
     grads['W2'] = dW2
 
-    # Backprop dScore to calculate db2.
+    # Backprop dSoft to calculate db2.
     db2 = dSoft * 1
     grads['b2'] = np.sum(db2, axis=0)
 
     # Calculate dx2 and backprop to calculate dRelu1.
     dx2 = np.dot(dSoft, W2.T)
     relu_mask = (relu_1_activation > 0)
-    dRelu1= relu_mask*dx2
+    dRelu1 = relu_mask*dx2
 
     # Backprop dRelu1 to calculate dW1 and add regularisation derivative.
     dW1 = np.dot(X.T, dRelu1)
