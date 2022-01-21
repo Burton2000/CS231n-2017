@@ -14,7 +14,7 @@ future==0.16.0
 gnureadline==6.3.3
 h5py==2.7.0
 ipykernel==4.2.2
-ipython==4.0.1
+ipython==7.16.3
 ipython-genutils==0.1.0
 ipywidgets==4.1.1
 jsonschema==2.5.1
