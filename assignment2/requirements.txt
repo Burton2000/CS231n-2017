@@ -27,7 +27,7 @@ mistune==0.7.1
 nbconvert==4.1.0
 nbformat==4.0.1
 nltk==3.2.2
-notebook==4.0.6
+notebook==6.4.12
 numpy==1.12.1
 path.py==8.1.2
 pexpect==4.0.1
