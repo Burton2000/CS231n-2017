@@ -23,7 +23,7 @@ jupyter-client==4.1.1
 jupyter-console==4.0.3
 jupyter-core==4.0.6
 matplotlib==2.0.0
-mistune==0.7.1
+mistune==2.0.3
 nbconvert==4.1.0
 nbformat==4.0.1
 nltk==3.2.2
